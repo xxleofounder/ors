@@ -57,7 +57,7 @@ async def start(event):
             "📣 ᴋᴜʟʟᴀɴɪᴍ ᴋᴏɴᴜsᴜɴᴅᴀ ʏᴀʀᴅɪᴍ ɪçɪɴ ʜᴇʟᴘ ʙᴜᴛᴏɴᴜɴᴜ ᴋᴜʟʟᴀɴᴀʙɪʟɪʀsɪɴɪᴢ."
         ),
         buttons=[
-            [Button.url("🥇 ᴏᴡɴᴇʀ", "https://t.me/ARTzX7")],
+            [Button.url("🥇 ᴏᴡɴᴇʀ", "https://t.me/artzfounder")],
             [Button.inline("ℹ️ ʜᴇʟᴘ", data="help")]
         ],
         link_preview=False
@@ -66,7 +66,7 @@ async def start(event):
     # Owner'a bildirim gönder
     await client.send_message(
         OWNER_ID,
-        f"👤 Kullanıcı /start kullandı:\n\n"
+        f"👤 kullanıcı /start kullandı:\n\n"
         f"• İsim: {first_name}\n"
         f"• ID: {user_id}\n"
         f"• Kullanıcı Adı: @{username}"
@@ -98,7 +98,7 @@ async def starta(event):
         "🎧 Bᴇɴ YᴏᴜTᴜʙᴇ iʟᴇ iʟɢiʟi ᴄ̧ᴇşɪᴛʟɪ ᴀʀᴀᴍᴀʟᴀʀ ʏᴀᴘᴀʀ, ᴀʀᴀᴅɪɢ̆ɪɴɪᴢ ᴍᴜ̈ᴢɪğɪ ʙᴜʟᴜᴘ sɪᴢᴇ ᴍᴘ3 ᴏʟᴀʀᴀᴋ ɢᴏ̈ɴᴅᴇʀɪʀɪᴍ.\n\n"
         "📣 ᴋᴜʟʟᴀɴɪᴍ ᴋᴏɴᴜsᴜɴᴅᴀ ʏᴀʀᴅɪᴍ ɪçɪɴ ʜᴇʟᴘ ʙᴜᴛᴏɴᴜɴᴜ ᴋᴜʟʟᴀɴᴀʙɪʟɪʀsɪɴɪᴢ.",
         buttons=[
-            [Button.url("🥇 ᴏᴡɴᴇʀ", "https://t.me/ARTzX7")],
+            [Button.url("🥇 ᴏᴡɴᴇʀ", "https://t.me/artzfounder")],
             [Button.inline("ℹ️ ʜᴇʟᴘ", data="help")]
         ],
         link_preview=False
