@@ -1,6 +1,6 @@
 import asyncio
 import os
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 import yt_dlp
 
 # -----------------------------
@@ -18,7 +18,7 @@ bot = Client("music_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 user = Client("user_session", api_id=api_id, api_hash=api_hash, session_string=user_session)
 
 # -----------------------------
-# Global değişken
+# Global değişkenler
 # -----------------------------
 is_playing = False
 current_task = None
@@ -52,16 +52,14 @@ async def play_music(query):
         is_playing = False
         return None, str(e)
 
-    # Simülasyon: şarkı çalınıyormuş gibi bekle
     try:
-        await asyncio.sleep(min(duration, 300))  # maksimum 5 dakika
+        await asyncio.sleep(min(duration, 300))  # Simülasyon: max 5 dk
     except asyncio.CancelledError:
         is_playing = False
         if os.path.exists(filename):
             os.remove(filename)
         return title, "Çalma iptal edildi"
 
-    # Dosyayı sil
     if os.path.exists(filename):
         os.remove(filename)
 
@@ -146,6 +144,6 @@ async def main():
     await bot.start()
     await user.start()
     print("✅ Bot ve Userbot çalışıyor ve aktif!")
-    await asyncio.get_event_loop().create_future()
+    await idle()  # Mesajları algılamak için Pyrogram idle
 
 asyncio.run(main())
