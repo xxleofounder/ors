@@ -1,12 +1,10 @@
 import asyncio
 import os
-import subprocess
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import yt_dlp
 
 # -----------------------------
-# Kullanıcı bilgilerini girin
+# Kullanıcı bilgileri
 # -----------------------------
 api_id = 21883581
 api_hash = "c3b4ba58d5dada9bc8ce6c66e09f3f12"
@@ -20,49 +18,55 @@ bot = Client("music_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 user = Client("user_session", api_id=api_id, api_hash=api_hash, session_string=user_session)
 
 # -----------------------------
-# ffmpeg ile çalma fonksiyonu
+# Global değişken
 # -----------------------------
-async def play_music(chat_id, query):
+is_playing = False
+current_task = None
+
+# -----------------------------
+# Şarkı çalma fonksiyonu (ffmpeg yok)
+# -----------------------------
+async def play_music(query):
+    global is_playing
+    is_playing = True
     filename = "song.mp3"
 
-    # Eğer link değilse YouTube'da ara
     if not query.startswith("http"):
         query = f"ytsearch1:{query}"
 
-    # YouTube'dan indir
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": filename,
         "noplaylist": True,
         "quiet": True
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(query, download=True)
-        if "entries" in info:
-            info = info["entries"][0]
-        title = info.get("title", "Bilinmeyen Şarkı")
-        duration = info.get("duration", 0)
 
-    # -----------------------------
-    # ffmpeg ile çal
-    # -----------------------------
     try:
-        process = subprocess.Popen([
-            "ffmpeg",
-            "-i", filename,
-            "-f", "wav",
-            "pipe:1"
-        ])
-        await asyncio.sleep(duration + 1)
-        process.kill()
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(query, download=True)
+            if "entries" in info:
+                info = info["entries"][0]
+            title = info.get("title", "Bilinmeyen Şarkı")
+            duration = info.get("duration", 0)
     except Exception as e:
-        print(f"⚠️ Çalma hatası: {e}")
+        is_playing = False
+        return None, str(e)
+
+    # Simülasyon: şarkı çalınıyormuş gibi bekle
+    try:
+        await asyncio.sleep(min(duration, 300))  # maksimum 5 dakika
+    except asyncio.CancelledError:
+        is_playing = False
+        if os.path.exists(filename):
+            os.remove(filename)
+        return title, "Çalma iptal edildi"
 
     # Dosyayı sil
     if os.path.exists(filename):
         os.remove(filename)
 
-    return title
+    is_playing = False
+    return title, None
 
 # -----------------------------
 # /start komutu
@@ -73,48 +77,67 @@ async def start(_, msg):
         await msg.reply(
             "👋 Merhaba!\n\n"
             "Ben bir 🎶 Müzik Çalma Botuyum.\n"
-            "• Gruptaki sesli sohbetlere katılırım.\n"
-            "• Şarkı ismi veya link yazarak müzik çaldırabilirsin.\n"
-            "• Kontrol için butonları kullanabilirsin.\n\n"
-            "ℹ️ Beni bir gruba ekle ve oradan kullan."
+            "Komutlar:\n"
+            "• /cal <şarkı ismi veya link> → Müzik çal\n"
+            "• /dur → Çalmayı durdur\n"
+            "• /pause → Duraklat (simülasyon)\n"
+            "• /resume → Devam ettir (simülasyon)\n\n"
+            "ℹ️ Beni gruplara ekleyip oradan da kullanabilirsin."
         )
     else:
-        await msg.reply(
-            "🎶 Müzik Botuna Hoşgeldin!\n\nButonlardan seçim yapabilirsin:",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [InlineKeyboardButton("🎵 Şarkı Oynat", callback_data="play")],
-                    [
-                        InlineKeyboardButton("⏸ Duraklat", callback_data="pause"),
-                        InlineKeyboardButton("▶️ Devam", callback_data="resume"),
-                    ],
-                    [InlineKeyboardButton("🛑 Durdur", callback_data="stop")],
-                ]
-            )
-        )
+        await msg.reply("🎶 Bot aktif! Komutlar: /cal /dur /pause /resume")
 
 # -----------------------------
-# Callback butonları
+# /cal komutu
 # -----------------------------
-@bot.on_callback_query()
-async def callbacks(_, cq):
-    if cq.data == "play":
-        await cq.message.edit("🎵 Çalmak istediğin şarkı ismi veya linkini yaz.")
-    elif cq.data in ["pause", "resume", "stop"]:
-        await cq.answer("⏸/▶️/🛑 Bu butonlar Userbot üzerinden manuel yönetim gerektirir.")
+@bot.on_message(filters.command("cal"))
+async def cal(_, msg):
+    global current_task, is_playing
+    if len(msg.command) < 2:
+        await msg.reply("❌ Lütfen şarkı ismi veya link gir: /cal <şarkı>")
+        return
+
+    if is_playing:
+        await msg.reply("❌ Zaten bir şarkı çalınıyor. /dur ile durdurabilirsin.")
+        return
+
+    query = " ".join(msg.command[1:])
+    await msg.reply(f"🔎 '{query}' aranıyor ve çalınıyor...")
+
+    current_task = asyncio.create_task(play_music(query))
+    title, error = await current_task
+
+    if error:
+        await msg.reply(f"❌ Çalma hatası: {error}")
+    else:
+        await msg.reply(f"▶️ Çalınıyor: {title}\n✅ Şarkı çalındıktan sonra silindi.")
 
 # -----------------------------
-# Kullanıcı mesajıyla şarkı çalma
+# /dur komutu
 # -----------------------------
-@bot.on_message(filters.text & ~filters.command("start"))
-async def play_from_text(_, msg):
-    query = msg.text.strip()
-    await msg.reply("🔎 Şarkı aranıyor ve çalınıyor...")
-    try:
-        title = await play_music(msg.chat.id, query)
-        await msg.reply(f"▶️ Çalınıyor: {title}\n✅ Şarkı çalındıktan sonra sunucudan silindi.")
-    except Exception as e:
-        await msg.reply(f"❌ Şarkı çalınamadı: {e}")
+@bot.on_message(filters.command("dur"))
+async def dur(_, msg):
+    global current_task, is_playing
+    if current_task and not current_task.done():
+        current_task.cancel()
+        is_playing = False
+        await msg.reply("🛑 Çalma durduruldu")
+    else:
+        await msg.reply("❌ Çalan bir şarkı yok")
+
+# -----------------------------
+# /pause komutu (simülasyon)
+# -----------------------------
+@bot.on_message(filters.command("pause"))
+async def pause(_, msg):
+    await msg.reply("⏸ Duraklat (simülasyon, ffmpeg yok)")
+
+# -----------------------------
+# /resume komutu (simülasyon)
+# -----------------------------
+@bot.on_message(filters.command("resume"))
+async def resume(_, msg):
+    await msg.reply("▶️ Devam et (simülasyon, ffmpeg yok)")
 
 # -----------------------------
 # Başlat
