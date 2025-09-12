@@ -9,7 +9,7 @@ import yt_dlp
 # 🔹 Kullanıcı bilgilerini buraya gir
 api_id = 21883581         # Telegram API ID
 api_hash = "c3b4ba58d5dada9bc8ce6c66e09f3f12"  # Telegram API HASH
-bot_token = "senin_bot_token"  # Bot token
+bot_token = "8449988873:AAFAAdg4cwLjE2GtiBk891OfE85o-xRQVuc"  # Bot token
 user_session = "BAFN6r0As-zf7RjX9rV9mx-FpqRb6m1mIzW8GBFZ-0lH-rfOsyjUOLjF6AcExzhOdeaDf1CGh8ljBH2j169S3ujwrKYFSztRBg4dS2kfjJWU25M2sPC9Jk_P5l-ybuoKDYGjdt7tEVpqlrhMlCmIZ4-YNVqESuM8DeKaLXh4_PmRz0SrBWdsBkCfYnG4IogFu49e4Ej-bEZ8rQBPpvDicnIpd8JjUl6t98BDPO0mqlBUsWY54wuI534tJKln8iJvDa-HsDuHuUmOgN37EtWgI4YP5HQX1MYWQZCa1c_URR-rOKgHJJBLIsYZEL2NCoQnVTzNkH-vShLXeys3X2Aoc2ZbEpvjmAAAAAHnAcMFAA"  # Userbot StringSession
 
 # 🔹 Başlatma
