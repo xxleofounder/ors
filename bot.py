@@ -3,20 +3,21 @@ import os
 import subprocess
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import yt_dlp
 
 # -----------------------------
 # Kullanıcı bilgilerini girin
 # -----------------------------
-api_id = 21883581           # Telegram API ID
-api_hash = "c3b4ba58d5dada9bc8ce6c66e09f3f12"   # Telegram API HASH
-bot_token = "8449988873:AAFAAdg4cwLjE2GtiBk891OfE85o-xRQVuc" # Bot token
-user_session = "BAFN6r0As-zf7RjX9rV9mx-FpqRb6m1mIzW8GBFZ-0lH-rfOsyjUOLjF6AcExzhOdeaDf1CGh8ljBH2j169S3ujwrKYFSztRBg4dS2kfjJWU25M2sPC9Jk_P5l-ybuoKDYGjdt7tEVpqlrhMlCmIZ4-YNVqESuM8DeKaLXh4_PmRz0SrBWdsBkCfYnG4IogFu49e4Ej-bEZ8rQBPpvDicnIpd8JjUl6t98BDPO0mqlBUsWY54wuI534tJKln8iJvDa-HsDuHuUmOgN37EtWgI4YP5HQX1MYWQZCa1c_URR-rOKgHJJBLIsYZEL2NCoQnVTzNkH-vShLXeys3X2Aoc2ZbEpvjmAAAAAHnAcMFAA"  # Userbot StringSession
+api_id = 21883581
+api_hash = "c3b4ba58d5dada9bc8ce6c66e09f3f12"
+bot_token = "8449988873:AAFAAdg4cwLjE2GtiBk891OfE85o-xRQVuc"
+user_session = "BAFN6r0As-zf7RjX9rV9mx-FpqRb6m1mIzW8GBFZ-0lH-rfOsyjUOLjF6AcExzhOdeaDf1CGh8ljBH2j169S3ujwrKYFSztRBg4dS2kfjJWU25M2sPC9Jk_P5l-ybuoKDYGjdt7tEVpqlrhMlCmIZ4-YNVqESuM8DeKaLXh4_PmRz0SrBWdsBkCfYnG4IogFu49e4Ej-bEZ8rQBPpvDicnIpd8JjUl6t98BDPO0mqlBUsWY54wuI534tJKln8iJvDa-HsDuHuUmOgN37EtWgI4YP5HQX1MYWQZCa1c_URR-rOKgHJJBLIsYZEL2NCoQnVTzNkH-vShLXeys3X2Aoc2ZbEpvjmAAAAAHnAcMFAA"
 
 # -----------------------------
 # Başlatma
 # -----------------------------
 bot = Client("music_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
-user = Client(user_session, api_id=api_id, api_hash=api_hash)
+user = Client("user_session", api_id=api_id, api_hash=api_hash, session_string=user_session)
 
 # -----------------------------
 # ffmpeg ile çalma fonksiyonu
@@ -35,7 +36,6 @@ async def play_music(chat_id, query):
         "noplaylist": True,
         "quiet": True
     }
-    import yt_dlp
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(query, download=True)
         if "entries" in info:
@@ -53,7 +53,6 @@ async def play_music(chat_id, query):
             "-f", "wav",
             "pipe:1"
         ])
-        # Basit olarak süresince bekle
         await asyncio.sleep(duration + 1)
         process.kill()
     except Exception as e:
