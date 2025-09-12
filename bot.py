@@ -1,243 +1,116 @@
-from telethon import Button
-from telethon import TelegramClient, events
-from asyncio import sleep
-from Config import Config
 import asyncio
-import subprocess
-from telethon import events
-import yt_dlp
 import os
-from telethon import events, errors
-import logging
-import re 
-import lyricsgenius
-import random
-from telethon import Button, events
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pytgcalls import PyTgCalls
+from pytgcalls.types.input_stream import InputAudioStream
+import yt_dlp
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(name)s - [%(levelname)s] - %(message)s'
-)
-LOGGER = logging.getLogger(__name__)
+# 🔹 Kullanıcı bilgilerini buraya gir
+api_id = 21883581         # Telegram API ID
+api_hash = "c3b4ba58d5dada9bc8ce6c66e09f3f12"  # Telegram API HASH
+bot_token = "senin_bot_token"  # Bot token
+user_session = "BAFN6r0As-zf7RjX9rV9mx-FpqRb6m1mIzW8GBFZ-0lH-rfOsyjUOLjF6AcExzhOdeaDf1CGh8ljBH2j169S3ujwrKYFSztRBg4dS2kfjJWU25M2sPC9Jk_P5l-ybuoKDYGjdt7tEVpqlrhMlCmIZ4-YNVqESuM8DeKaLXh4_PmRz0SrBWdsBkCfYnG4IogFu49e4Ej-bEZ8rQBPpvDicnIpd8JjUl6t98BDPO0mqlBUsWY54wuI534tJKln8iJvDa-HsDuHuUmOgN37EtWgI4YP5HQX1MYWQZCa1c_URR-rOKgHJJBLIsYZEL2NCoQnVTzNkH-vShLXeys3X2Aoc2ZbEpvjmAAAAAHnAcMFAA"  # Userbot StringSession
 
-api_id = Config.API_ID
-api_hash = Config.API_HASH
-bot_token = Config.BOT_TOKEN
+# 🔹 Başlatma
+bot = Client("music_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+user = Client(user_session, api_id=api_id, api_hash=api_hash)
+pytg = PyTgCalls(user)
 
-# Sudo/owner ID'yi buraya gir
-OWNER_ID = 8276543841
-
-client = TelegramClient('client', api_id, api_hash).start(bot_token=bot_token)
-
-GENIUS_TOKEN = "IEr1zibeW1gnG5yS0JTRqUFzo6iiL8-fOhQXWMGOhUK74zbKYfYwm8XmcO52oGL3"
-
-# ʀᴀsᴛɢᴇʟᴇ ᴛᴜ̈ʀ
-keywords = {
-    "Rap": ["rap", "hiphop", "trap", "rap Türkçe"],
-    "Pop": ["pop", "slow", "pop Türkçe", "aşk"],
-    "Arabesk": ["arabesk", "türk arabesk", "arabesk slow"],
-    "Diger": ["türkü", "rock", "jazz", "klasik"]
-}
-  
-
-@client.on(events.NewMessage(pattern="^/start$"))
-async def start(event):
-    user = await event.get_sender()
-    first_name = user.first_name
-    user_id = user.id
-    username = user.username if user.username else "Kullanıcı adı yok"
-
-    # Kullanıcıya hoş geldin mesajı
-    await client.send_file(
-        event.chat_id,
-        "https://r.resimlink.com/wk3gFJ.jpg",
-        caption=(
-            f"👋🏻 ᴍᴇʀʜᴀʙᴀ {first_name}, ᴀʀᴛᴢ ᴍᴜsɪᴄ\n\n"
-            "🎧 Bᴇɴ YᴏᴜTᴜʙᴇ iʟᴇ iʟɢiʟi ᴄ̧ᴇşɪᴛʟɪ ᴀʀᴀᴍᴀʟᴀʀ ʏᴀᴘᴀʀ, ᴀʀᴀᴅɪɢ̆ɪɴɪᴢ ᴍᴜ̈ᴢɪğɪ ʙᴜʟᴜᴘ sɪᴢᴇ ᴍᴘ3 ᴏʟᴀʀᴀᴋ ɢᴏ̈ɴᴅᴇʀɪʀɪᴍ.\n\n"
-            "📣 ᴋᴜʟʟᴀɴɪᴍ ᴋᴏɴᴜsᴜɴᴅᴀ ʏᴀʀᴅɪᴍ ɪçɪɴ ʜᴇʟᴘ ʙᴜᴛᴏɴᴜɴᴜ ᴋᴜʟʟᴀɴᴀʙɪʟɪʀsɪɴɪᴢ."
-        ),
-        buttons=[
-            [Button.url("🥇 ᴏᴡɴᴇʀ", "https://t.me/artzfounder")],
-            [Button.inline("ℹ️ ʜᴇʟᴘ", data="help")]
-        ],
-        link_preview=False
-    )
-
-    # Owner'a bildirim gönder
-    await client.send_message(
-        OWNER_ID,
-        f"👤 kullanıcı /start kullandı:\n\n"
-        f"• İsim: {first_name}\n"
-        f"• ID: {user_id}\n"
-        f"• Kullanıcı Adı: @{username}"
-    )
-
-
-# Inline Help Menüsü
-@client.on(events.CallbackQuery(data="help"))
-async def help_menu(event):
-    await event.edit(
-        "📚 ᴋᴏᴍᴜᴛʟᴀʀɪᴍ ᴀşᴀɢ̆ɪᴅᴀ ʏᴇʀ ᴀʟɪʏᴏʀ:\n\n"
-        "➪ `/ara` - ʏᴏᴛᴜʙᴇᴅᴇ ᴍᴜsɪc, ᴠᴇʏᴀ ᴅᴏsʏᴀ sᴇsɪ ɪɴᴅɪʀɪʀ\n\n"
-        "➪ `/song` - ᴀʀᴀᴅɪɢ̆ɪɴɪᴢ ᴘᴀʀᴄ̧ᴀɴɪɴ sᴏ̈ᴢʟᴇʀɪɴɪ ʙᴜʟᴜᴘ sɪᴢᴇ iʟᴇᴛiʀ\n\n"
-        "➪ `/random` - siᴢᴇ ʀᴀsᴛɢᴇʟᴇ ʏᴏᴜᴛᴜʙᴇ'ᴅᴇ ᴘᴀʀᴄ̧ᴀ ʙᴜʟᴜᴘ ᴀᴛᴀʀ\n\n"
-        "➪ `/yenile` - sᴜɴᴜᴄᴜ'ʏᴜ ʏᴇɴɪᴅᴇɴ ʙᴀşʟᴀᴛɪʀ, ʜᴀᴛᴀʟᴀʀɪ ɢɪᴅᴇʀɪʀ",
-        buttons=[[Button.inline("⬅️ ɢᴇʀɪ ᴅᴏ̈ɴ", data="starta")]],
-        link_preview=False
-    )
-
-
-# Inline Start’a Geri Dön
-@client.on(events.CallbackQuery(data="starta"))
-async def starta(event):
-    user = await event.get_sender()
-    first_name = user.first_name
-
-    await event.edit(
-        f"👋🏻 ᴍᴇʀʜᴀʙᴀ {first_name}, ᴀʀᴛᴢ ᴍᴜsɪᴄ\n\n"
-        "🎧 Bᴇɴ YᴏᴜTᴜʙᴇ iʟᴇ iʟɢiʟi ᴄ̧ᴇşɪᴛʟɪ ᴀʀᴀᴍᴀʟᴀʀ ʏᴀᴘᴀʀ, ᴀʀᴀᴅɪɢ̆ɪɴɪᴢ ᴍᴜ̈ᴢɪğɪ ʙᴜʟᴜᴘ sɪᴢᴇ ᴍᴘ3 ᴏʟᴀʀᴀᴋ ɢᴏ̈ɴᴅᴇʀɪʀɪᴍ.\n\n"
-        "📣 ᴋᴜʟʟᴀɴɪᴍ ᴋᴏɴᴜsᴜɴᴅᴀ ʏᴀʀᴅɪᴍ ɪçɪɴ ʜᴇʟᴘ ʙᴜᴛᴏɴᴜɴᴜ ᴋᴜʟʟᴀɴᴀʙɪʟɪʀsɪɴɪᴢ.",
-        buttons=[
-            [Button.url("🥇 ᴏᴡɴᴇʀ", "https://t.me/artzfounder")],
-            [Button.inline("ℹ️ ʜᴇʟᴘ", data="help")]
-        ],
-        link_preview=False
-    )
-
-
-@client.on(events.NewMessage(pattern=r"^/ara (.+)"))
-async def ara(event):
-    query = event.pattern_match.group(1)
-    status = await event.reply("🎵 ᴍᴜ̈ᴢiɢ̆i ʏᴏᴜᴛᴜʙᴇ'ᴅᴇ ᴀʀɪʏᴏʀᴜᴍ...")
-
+# 🔹 Şarkı oynatma fonksiyonu (indir → çal → sil)
+async def play_music(chat_id, query):
+    filename = "song.mp3"
     ydl_opts = {
         "format": "bestaudio/best",
-        "noplaylist": True,
-        "quiet": True,
-        "outtmpl": "%(title)s.%(ext)s",
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
-        }],
-    }
-
-    filename = None  # dosyayi sunucuda bırakma sil
-
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f"ytsearch:{query}", download=True)
-            if not info or "entries" not in info or len(info["entries"]) == 0:
-                await status.edit("❌ ᴜ̈ᴢɢᴜ̈ɴᴜ̈ᴍ ʙᴜ sᴇs ᴅᴏsʏᴀsɪɴɪ, ʏᴏᴜᴛᴜʙᴇᴅᴇ ʙᴜʟᴀᴍᴀᴅɪᴍ.")
-                return
-
-            video = info["entries"][0]
-            title = video.get("title", "Bilinmeyen Başlık")
-            safe_title = re.sub(r'[\\/*?:"<>|]', "", title)
-            filename = f"{safe_title}.mp3"
-
-        await status.edit("✅ ᴘᴀʀᴄ̧ᴀʏɪ ʙᴜʟᴅᴜᴍ")
-        await status.edit("📤 ᴘᴀʀᴄ̧ᴀʏɪ ɢᴏ̈ɴᴅᴇʀɪʏᴏʀᴜᴍ, ʙɪʀ sᴀɴɪʏᴇ...")
-
-        await event.reply(file=filename, message=f"🎶 {title}")
-
-    except Exception as e:
-        await event.reply(f"❌ ʜᴀᴛᴀ ᴏʟᴜşᴛᴜ: {e}")
-
-    finally:
-        if filename and os.path.exists(filename):
-            os.remove(filename)
-        await status.delete()
-
-
-@client.on(events.NewMessage(pattern="^/yenile$"))
-async def yenile(event):
-    # Başlangıç mesajı
-    mesaj = await event.respond("🔄 ʏᴇɴɪᴅᴇɴ ʙᴀşʟᴀᴛɪʟɪʏᴏʀ: %0")
-
-    for yuzde in range(10, 101, 10):
-        await asyncio.sleep(0.5)
-        await mesaj.edit(f"🔄 ʏᴇɴɪᴅᴇɴ ʙᴀşʟᴀᴛɪʟɪʏᴏʀ: %{yuzde}")
-
-  
-    try:
-        ping_output = subprocess.check_output(
-            ["ping", "-c", "1", "8.8.8.8"], universal_newlines=True
-        )
-        # Çıktıdan süreyi al
-        ping_line = [line for line in ping_output.split("\n") if "time=" in line][0]
-        ping_ms = ping_line.split("time=")[1].split(" ")[0]
-    except Exception:
-        ping_ms = "ᴜ̈ᴢɢᴜ̈ɴᴜ̈ᴍ, ᴘɪɴɢ ᴏ̈ʟᴄ̧ᴜ̈ʟᴍᴇᴅɪ"
-
-    await asyncio.sleep(2)
-    await mesaj.edit(f"✅ ʏᴇɴɪʟᴇᴍᴇ ʙɪᴛᴛɪ!! ᴘɪɴɢ: {ping_ms} ms\nʙᴏᴛ ᴀʀᴛɪᴋ ᴅᴀʜᴀ sᴛᴀʙɪʟ, ɪʏɪ sᴏʜʙᴇᴛʟᴇʀ..")
-
-
-genius = lyricsgenius.Genius(GENIUS_TOKEN, timeout=15, skip_non_songs=True)
-
-@client.on(events.NewMessage(pattern=r"^/song (.+)"))
-async def song(event):
-    query = event.pattern_match.group(1)
-    status = await event.reply(f"🔎 '{query}' şᴀʀᴋɪsɪɴɪɴ sᴏ̈ᴢʟᴇʀɪɴɪ ᴀʀɪʏᴏʀᴜᴍ...")
-
-    try:
-        song = genius.search_song(query)
-        if song and song.lyrics:
-            lyrics = song.lyrics
-            if len(lyrics) > 4000: 
-                lyrics = lyrics[:4000] + "\n\n[...Daha fazla söz var]"
-            await event.reply(f"🎶 {song.title} - {song.artist}\n\n{lyrics}")
-        else:
-            await event.reply("❌ ᴜ̈ᴢɢᴜ̈ɴᴜ̈ᴍ, şᴀʀᴋɪ sᴏ̈ᴢʟᴇʀɪɴɪ ʙᴜʟᴀᴍᴀᴅɪᴍ")
-    except Exception as e:
-        await event.reply(f"❌ ʙɪʀ ʜᴀᴛᴀ ᴏʟᴜşᴛᴜ: {e}")
-    finally:
-        await status.delete()
-
-
-@client.on(events.NewMessage(pattern="^/random$"))
-async def random_genre(event):
-    buttons = [
-        [Button.inline("🎤 ʀᴀᴘ", "Rap"), Button.inline("🎵 ᴘᴏᴘ", "Pop")],
-        [Button.inline("🎻 ᴀʀᴀʙᴇsᴋ", "Arabesk"), Button.inline("🎶 ᴅiɢ̆ᴇʀ", "Diger")]
-    ]
-    await event.respond("🎲 **ᴀʀᴀɴᴀᴄᴀᴋ şᴀʀᴋɪ ᴛᴜ̈ʀᴜ̈ɴᴜ̈ sᴇᴄ̧!:**", buttons=buttons, parse_mode="md")
-
-
-@client.on(events.CallbackQuery)
-async def callback_random(event):
-    choice = event.data.decode("utf-8")  # seçilen tür
-    if choice not in keywords:
-        await event.answer("❌ ʜᴀᴛᴀ: ʙɪʟɪɴᴍᴇʏᴇɴ ᴛᴜ̈ʀ")
-        return
-
-    await event.answer(f"🔎 {choice} ᴛᴜ̈ʀᴜ̈ɴᴅᴇ şᴀʀᴋɪ sᴇᴄ̧ɪʟɪʏᴏʀ...")
-    query = random.choice(keywords[choice])
-    status = await event.edit(f"⏳ '{query}' ᴛᴜ̈ʀᴜ̈ɴᴅᴇ ʀᴀsᴛɢᴇʟᴇ şᴀʀᴋɪ ᴀʀᴀɴɪʏᴏʀ...")
-
-    ydl_opts = {
-        "format": "bestaudio/best",
+        "outtmpl": filename,
         "noplaylist": True,
         "quiet": True
     }
 
+    # Link değilse YouTube'da ara
+    if not query.startswith("http"):
+        query = f"ytsearch1:{query}"
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(query, download=True)
+        if "entries" in info:
+            info = info["entries"][0]
+        title = info.get("title", "Bilinmeyen Şarkı")
+        duration = info.get("duration", 0)
+
+    # Çal
+    await pytg.join_group_call(chat_id, InputAudioStream(filename))
+    # Çalma süresi boyunca bekle
+    await asyncio.sleep(duration + 1)
+
+    # Dosyayı sil
+    if os.path.exists(filename):
+        os.remove(filename)
+
+    return title
+
+# 🔹 /start komutu
+@bot.on_message(filters.command("start"))
+async def start(_, msg):
+    if msg.chat.type == "private":
+        await msg.reply(
+            "👋 Merhaba!\n\n"
+            "Ben bir 🎶 **Müzik Çalma Botuyum**.\n"
+            "• Gruptaki sesli sohbetlere katılırım.\n"
+            "• Şarkı ismi veya link yazarak müzik çaldırabilirsin.\n"
+            "• Kontrol için butonları kullanabilirsin.\n\n"
+            "ℹ️ Beni bir **gruba ekle** ve oradan kullanmaya başla."
+        )
+    else:
+        await msg.reply(
+            "🎶 Müzik Botuna Hoşgeldin!\n\nButonlardan seçim yapabilirsin:",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("🎵 Şarkı Oynat", callback_data="play")],
+                    [
+                        InlineKeyboardButton("⏸ Duraklat", callback_data="pause"),
+                        InlineKeyboardButton("▶️ Devam", callback_data="resume"),
+                    ],
+                    [InlineKeyboardButton("⏭ Sonraki", callback_data="skip"),
+                     InlineKeyboardButton("🛑 Durdur", callback_data="stop")],
+                ]
+            )
+        )
+
+# 🔹 Callback butonları
+@bot.on_callback_query()
+async def callbacks(_, cq):
+    if cq.data == "play":
+        await cq.message.edit("🎵 Çalmak istediğin şarkının **isim veya link**'ini yaz.")
+    elif cq.data == "pause":
+        await pytg.pause_stream(cq.message.chat.id)
+        await cq.answer("⏸ Şarkı duraklatıldı")
+    elif cq.data == "resume":
+        await pytg.resume_stream(cq.message.chat.id)
+        await cq.answer("▶️ Devam ediyor")
+    elif cq.data == "stop":
+        await pytg.leave_group_call(cq.message.chat.id)
+        await cq.answer("🛑 Müzik durduruldu")
+    elif cq.data == "skip":
+        await cq.answer("⏭ Sonraki şarkı özelliği henüz yok.")
+
+# 🔹 Kullanıcının yazdığı mesajla şarkı çalma
+@bot.on_message(filters.text & ~filters.command("start"))
+async def play_from_text(_, msg):
+    query = msg.text.strip()
+    await msg.reply("🔎 Şarkı aranıyor ve çalınıyor...")
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f"ytsearch:{query}", download=False)
-            if not info or "entries" not in info or len(info["entries"]) == 0:
-                await status.edit("❌ ᴏʜʜ, şᴀʀᴋɪʏɪ ʙᴜʟᴍᴀᴅɪᴍ")
-                return
-
-            video = info["entries"][0]
-            title = video.get("title", "Bilinmeyen Şarkı")
-            url = video.get("webpage_url")
-
-            await status.edit(f"🎶 **ʀᴀɴᴅᴏᴍ şᴀʀᴋɪ:**\n➡️ [{title}]({url})", parse_mode="md")
-
+        title = await play_music(msg.chat.id, query)
+        await msg.reply(f"▶️ Çalınıyor: {title}\n✅ Şarkı çalındıktan sonra sunucudan silindi.")
     except Exception as e:
-        await status.edit(f"❌ ʜᴀᴛᴀ ᴏʟᴜşᴛᴜ: {e}")  
+        await msg.reply(f"❌ Şarkı çalınamadı: {e}")
 
+# 🔹 Başlat
+async def main():
+    await bot.start()
+    await user.start()
+    await pytg.start()
+    print("✅ Bot ve Userbot çalışıyor...")
+    await asyncio.get_event_loop().create_future()
 
-print(">> 🛠️ Artz , Başarıyla Aktifleştirildi...<<")
-client.run_until_disconnected()
+asyncio.run(main())
